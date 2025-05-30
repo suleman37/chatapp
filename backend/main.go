@@ -16,7 +16,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	dbconnect.ConnectDB()
+	dbconnect.DBConnection()
 	router := gin.Default()
 	router.Use(middleware.CORSMiddleware())
 	routes.RegisterRoutes(router)

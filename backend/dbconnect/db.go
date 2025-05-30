@@ -5,31 +5,41 @@ import (
 	"log"
 	"os"
 	"time"
-
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var DB *mongo.Client
+var client *mongo.Client
 
-func ConnectDB() {
-	clientOptions := options.Client().ApplyURI(os.Getenv("MONGODB_URI"))
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+func DBConnection() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
-	client, err := mongo.Connect(ctx, clientOptions)
+	mongodbURI := os.Getenv("MONGODB_URI")
+	clientOptions := options.Client().ApplyURI(mongodbURI)
+	client, err = mongo.NewClient(clientOptions)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err = client.Connect(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	err = client.Ping(ctx, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	log.Println("Connected to MongoDB!")
-	DB = client
+	log.Println("Database Connected Successfully")
 }
 
-func GetCollection() *mongo.Collection {
-	return DB.Database("Golang").Collection("users")
+func GetCollection(collectionName string) *mongo.Collection {
+	return client.Database("chatapp").Collection(collectionName)
 }

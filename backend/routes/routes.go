@@ -11,7 +11,7 @@ func RegisterRoutes(r *gin.Engine) {
 	r.POST("/login", controller.Login)
 	auth := r.Group("/")
 	auth.Use(middleware.JWTAuthMiddleware())
-	auth.GET("/users", controller.GetAllUsers)
-	auth.POST("/message", controller.CreateMessage)
-	auth.GET("/messages-get", controller.GetMessages)
+	// auth.GET("/users", controller.GetAllUsers)
+	// auth.POST("/message", controller.CreateMessage)
+	// auth.GET("/messages-get", controller.GetMessages)
 }
