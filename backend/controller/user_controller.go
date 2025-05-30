@@ -7,6 +7,7 @@ import (
 
 	"Go_Chatapp/models"
 	"Go_Chatapp/service"
+	"Go_Chatapp/middleware"
 )
 
 func Register(c *gin.Context) {
@@ -40,12 +41,14 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	token, err := middleware.GenerateJWT(user.ID.Hex(), user.Email, user.Username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token generation failed"})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
-		"user": gin.H{
-			"id":       user.ID.Hex(),
-			"username": user.Username,
-			"email":    user.Email,
-		},
+		"token":   token,
 	})
 }
