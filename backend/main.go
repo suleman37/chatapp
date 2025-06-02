@@ -7,6 +7,7 @@ import (
 	"Go_Chatapp/dbconnect"
 	"Go_Chatapp/middleware"
 	"Go_Chatapp/routes"
+	ws "Go_Chatapp/websocket"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -16,14 +17,19 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+
 	dbconnect.DBConnection()
+
+	go ws.StartWebSocketServer("8080")
+
 	router := gin.Default()
 	router.Use(middleware.CORSMiddleware())
 	routes.RegisterRoutes(router)
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8000"
 	}
-	log.Printf("Server running on port %s", port)
+	log.Printf("HTTP server running on port %s", port)
 	router.Run(":" + port)
 }
