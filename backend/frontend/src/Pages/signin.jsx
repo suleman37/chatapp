@@ -20,7 +20,16 @@ const SignIn = ({ formData, onChange }) => {
 
             if (response.ok) {
                 toast.success("Login successful!", {
-                    onClose: () => navigate("/chat")
+                    onClose: () => {
+                        const socket = new WebSocket(import.meta.env.VITE_WEB_SOCKET);
+                        socket.onopen = () => {
+                            console.log("WebSocket connection established");
+                            navigate("/chat");
+                        };
+                        socket.onerror = (error) => {
+                            console.error("WebSocket error:", error);
+                        };
+                    }
                 });
                 localStorage.setItem("token", data.token);
             } else {
