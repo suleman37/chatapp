@@ -7,7 +7,7 @@ import (
 	"Go_Chatapp/dbconnect"
 	"Go_Chatapp/middleware"
 	"Go_Chatapp/routes"
-	ws "Go_Chatapp/websocket"
+
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -19,8 +19,6 @@ func main() {
 	}
 
 	dbconnect.DBConnection()
-
-	go ws.StartWebSocketServer("8080")
 
 	router := gin.Default()
 	router.Use(middleware.CORSMiddleware())
