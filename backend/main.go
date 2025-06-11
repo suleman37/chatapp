@@ -7,7 +7,6 @@ import (
 	"Go_Chatapp/dbconnect"
 	"Go_Chatapp/middleware"
 	"Go_Chatapp/routes"
-
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
