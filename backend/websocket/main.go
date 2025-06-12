@@ -1,9 +1,11 @@
 package main
 
 import (
+	"Go_Chatapp/middleware"
 	"log"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
 
@@ -18,18 +20,20 @@ var broadcast = make(chan []byte)
 
 func main() {
 	go handleMessages()
-	http.HandleFunc("/ws", wsHandler)
-	http.HandleFunc("/ws-backend", backendWsHandler)
+	router := gin.Default()
+	router.GET("/ws", middleware.AuthMiddleware(), wsHandler)
+	router.GET("/ws-backend", backendWsHandler)
 	port := "8001"
 	log.Printf("WebSocket server started on port %s", port)
-	err := http.ListenAndServe(":"+port, nil)
+	err := router.Run(":" + port)
 	if err != nil {
 		log.Fatalf("Server error: %v", err)
 	}
 }
 
-func wsHandler(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+func wsHandler(c *gin.Context) {
+
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Println("Upgrade error:", err)
 		return
@@ -50,8 +54,8 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func backendWsHandler(w http.ResponseWriter, r *http.Request) {
-	backendConn, err := upgrader.Upgrade(w, r, nil)
+func backendWsHandler(c *gin.Context) {
+	backendConn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Println("Backend upgrade error:", err)
 		return

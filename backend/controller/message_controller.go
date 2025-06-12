@@ -1,10 +1,11 @@
 package controller
 
 import (
-	"net/http"
 	"Go_Chatapp/models"
-	"Go_Chatapp/service"
+	"encoding/json"
+	"net/http"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
 func CreateMessage(c *gin.Context) {
@@ -14,8 +15,15 @@ func CreateMessage(c *gin.Context) {
 		return
 	}
 
-	if err := service.SendMessage(message); err != nil {
-		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+	messageBytes, err := json.Marshal(message)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to encode message"})
+		return
+	}
+
+	err = models.WebsocketConn.WriteMessage(websocket.TextMessage, messageBytes)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send message over WebSocket"})
 		return
 	}
 
