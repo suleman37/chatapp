@@ -3,6 +3,7 @@ package routes
 import (
 	"Go_Chatapp/controller"
 	"Go_Chatapp/middleware"
+
 	"github.com/gin-gonic/gin"
 )
 

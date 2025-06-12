@@ -21,7 +21,9 @@ func AuthMiddleware() gin.HandlerFunc {
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		secretKey := []byte(os.Getenv("JWT_SECRET"))
 
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		claims := &jwt.MapClaims{}
+
+		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, jwt.ErrSignatureInvalid
 			}
@@ -30,6 +32,14 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		if err != nil || !token.Valid {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort()
+			return
+		}
+
+		if userID, ok := (*claims)["user_id"]; ok {
+			c.Set("user_id", userID)
+		} else {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in token"})
 			c.Abort()
 			return
 		}
