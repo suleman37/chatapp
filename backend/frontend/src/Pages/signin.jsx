@@ -1,8 +1,24 @@
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 const SignIn = ({ formData, onChange }) => {
     const navigate = useNavigate();
+    const [socket, setSocket] = useState(null);
+
+    useEffect(() => {
+        if (socket) {
+            socket.onopen = () => {
+                console.log("WebSocket connection established");
+            };
+            socket.onerror = (error) => {
+                console.error("WebSocket error:", error);
+            };
+            return () => {
+                socket.close();
+            };
+        }
+    }, [socket]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -16,18 +32,18 @@ const SignIn = ({ formData, onChange }) => {
                 }),
             });
             const data = await response.json();
-            console.log("Response Data:", data);
-
             if (response.ok) {
                 toast.success("Login successful!", {
-                    onClose: () => navigate("/chat")
+                    onClose: () => {
+                        setSocket(new WebSocket(`ws://localhost:8001/ws`));
+                        navigate("/chat");
+                    }
                 });
                 localStorage.setItem("token", data.token);
             } else {
                 toast.error(data.message || "Login failed!");
             }
         } catch (error) {
-            console.error("Error logging in:", error);
             toast.error("Error logging in!");
         }
     };

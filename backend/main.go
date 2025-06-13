@@ -6,9 +6,11 @@ import (
 
 	"Go_Chatapp/dbconnect"
 	"Go_Chatapp/middleware"
+	"Go_Chatapp/models"
 	"Go_Chatapp/routes"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 )
 
@@ -19,6 +21,14 @@ func main() {
 	}
 
 	dbconnect.DBConnection()
+
+	wsURL := "ws://localhost:8001/ws-backend"
+	models.WebsocketConn, _, err = websocket.DefaultDialer.Dial(wsURL, nil)
+	if err != nil {
+		log.Fatalf("Failed to connect to WebSocket backend: %v", err)
+	}
+	defer models.WebsocketConn.Close()
+	log.Println("Connected to WebSocket backend")
 
 	router := gin.Default()
 	router.Use(middleware.CORSMiddleware())

@@ -1,8 +1,11 @@
 package main
 
 import (
+	"Go_Chatapp/middleware"
 	"log"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
 
@@ -12,36 +15,38 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-var clients = make(map[*websocket.Conn]bool)
+var clients = make(map[string]*websocket.Conn)
 var broadcast = make(chan []byte)
 
 func main() {
 	go handleMessages()
-	http.HandleFunc("/ws", wsHandler)
-
+	router := gin.Default()
+	router.GET("/ws", middleware.AuthMiddleware(), wsHandler)
+	router.GET("/ws-backend", backendWsHandler)
 	port := "8001"
 	log.Printf("WebSocket server started on port %s", port)
-	err := http.ListenAndServe(":"+port, nil)
+	err := router.Run(":" + port)
 	if err != nil {
 		log.Fatalf("Server error: %v", err)
 	}
 }
 
-func wsHandler(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+func wsHandler(c *gin.Context) {
+
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Println("Upgrade error:", err)
 		return
 	}
 	defer conn.Close()
-	clients[conn] = true
-	log.Println("New Users connected")
+	clients["user_id"] = conn
+	log.Println("New User connected")
 
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("Read error:", err)
-			delete(clients, conn)
+			delete(clients, "user_id")
 			break
 		}
 		log.Printf("Received message: %s", msg)
@@ -49,15 +54,35 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func backendWsHandler(c *gin.Context) {
+	backendConn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		log.Println("Backend upgrade error:", err)
+		return
+	}
+	defer backendConn.Close()
+	log.Println("Backend connected")
+
+	for {
+		_, msg, err := backendConn.ReadMessage()
+		if err != nil {
+			log.Println("Backend read error:", err)
+			break
+		}
+		log.Printf("Received backend message: %s", msg)
+		broadcast <- msg
+	}
+}
+
 func handleMessages() {
 	for {
 		msg := <-broadcast
-		for client := range clients {
+		for _, client := range clients {
 			err := client.WriteMessage(websocket.TextMessage, msg)
 			if err != nil {
 				log.Println("Write error:", err)
 				client.Close()
-				delete(clients, client)
+				delete(clients, "user_id")
 			}
 		}
 	}
