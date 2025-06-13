@@ -2,8 +2,10 @@ package controller
 
 import (
 	"Go_Chatapp/models"
+	"Go_Chatapp/service"
 	"encoding/json"
-	"net/http"
+	"log"
+	"net/http"                                                                                                                                                                                                                                                                                                             
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
@@ -24,8 +26,13 @@ func CreateMessage(c *gin.Context) {
 	err = models.WebsocketConn.WriteMessage(websocket.TextMessage, messageBytes)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send message over WebSocket"})
+		log.Println("Upgrade error:")
 		return
 	}
 
+	if err := service.SendMessage(message); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save message to database"})
+		return
+	}
 	c.JSON(http.StatusCreated, gin.H{"message": "Message sent successfully"})
 }
