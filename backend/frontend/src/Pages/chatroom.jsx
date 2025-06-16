@@ -31,7 +31,7 @@ const ChatUI = ({ user }) => {
         return;
       }
 
-      const ws = new WebSocket(`ws://localhost:8001/ws?token=${token}`);
+      const ws = new WebSocket(`${import.meta.env.VITE_WEB_SOCKET}/ws?token=${token}`);
 
       ws.onopen = () => console.log('WebSocket connection established');
       ws.onmessage = (event) => {
