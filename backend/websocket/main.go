@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
 )
 
 var upgrader = websocket.Upgrader{
@@ -19,13 +20,19 @@ var clients = make(map[string]*websocket.Conn)
 var broadcast = make(chan []byte)
 
 func main() {
+
+	err := godotenv.Load("../.env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	go handleMessages()
 	router := gin.Default()
-	router.GET("/ws", middleware.AuthMiddleware(), wsHandler)
+	router.GET("/ws", middleware.SocketMiddleware(), wsHandler)
 	router.GET("/ws-backend", backendWsHandler)
 	port := "8001"
 	log.Printf("WebSocket server started on port %s", port)
-	err := router.Run(":" + port)
+	err = router.Run(":" + port)
 	if err != nil {
 		log.Fatalf("Server error: %v", err)
 	}

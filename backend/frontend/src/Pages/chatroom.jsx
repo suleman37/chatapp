@@ -4,36 +4,53 @@ import { useNavigate } from 'react-router-dom';
 const ChatUI = ({ user }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token'));
   const [userId, setUserId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log("Selected user DATA:", user);
-  }, [user]);
-
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    setToken(storedToken);
-
-    if (storedToken) {
+    if (token) {
       try {
-        const base64Url = storedToken.split('.')[1];
+        const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => 
+          '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+        ).join(''));
         const decodedData = JSON.parse(jsonPayload);
         setUserId(decodedData.user_id);
       } catch (error) {
         console.error('Error decoding token:', error);
       }
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
+    const connectWebSocket = () => {
+      if (!user?.id) {
+        console.error('User or user.id is null');
+        return;
+      }
+
+      const ws = new WebSocket(`ws://localhost:8001/ws?token=${token}`);
+
+      ws.onopen = () => console.log('WebSocket connection established');
+      ws.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        if ([`${userId}_${user.id}`, `${user.id}_${userId}`].includes(message.chatRoomId)) {
+          setMessages(prevMessages => [...prevMessages, {
+            from: message.sender === userId ? 'me' : 'other',
+            text: message.content
+          }]);
+        }
+      };
+      ws.onerror = (error) => console.error('WebSocket error:', error);
+      ws.onclose = () => console.log('WebSocket connection closed');
+
+      return () => ws.close();
+    };
+
     const fetchMessages = async () => {
-      if (!user || !user.id) {
+      if (!user?.id) {
         console.error('User or user.id is null');
         return;
       }
@@ -49,7 +66,9 @@ const ChatUI = ({ user }) => {
 
         if (response.ok) {
           const data = await response.json();
-          const filteredMessages = data.messages.filter(msg => msg.chatRoomId === `${userId}_${user.id}` || msg.chatRoomId === `${user.id}_${userId}`);
+          const filteredMessages = data.messages.filter(msg => 
+            [`${userId}_${user.id}`, `${user.id}_${userId}`].includes(msg.chatRoomId)
+          );
           setMessages(filteredMessages.map(msg => ({
             from: msg.sender === userId ? 'me' : 'other',
             text: msg.content
@@ -63,12 +82,13 @@ const ChatUI = ({ user }) => {
     };
 
     if (token && userId) {
+      connectWebSocket();
       fetchMessages();
     }
   }, [token, userId, user]);
 
   const handleSendMessage = async () => {
-    if (newMessage.trim() !== '' && user && user.id) {
+    if (newMessage.trim() && user?.id) {
       const messageData = {
         sender: userId,
         receiver: user.id,

@@ -5,10 +5,12 @@ const MessageSidebar = ({ onChatSelect }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [chats, setChats] = useState([]);
   const [userId, setUserId] = useState(null);
+  const [token, setToken] = useState(null);
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
+      setToken(storedToken);
       try {
         const base64Url = storedToken.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -25,9 +27,20 @@ const MessageSidebar = ({ onChatSelect }) => {
 
   useEffect(() => {
     const fetchChats = async () => {
+      if (!token) {
+        console.error('Token is not available');
+        return;
+      }
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/users`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/users`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
         const data = await response.json();
+        console.log("test data:::", data);
         const formattedChats = data.users.map(user => ({
           name: user.id === userId ? `${user.username} (You)` : user.username,
           id: user.id,
@@ -47,7 +60,7 @@ const MessageSidebar = ({ onChatSelect }) => {
     };
 
     fetchChats();
-  }, [userId, onChatSelect]);
+  }, [userId, onChatSelect, token]);
 
   const filteredChats = chats.filter(chat =>
     chat.name.toLowerCase().includes(searchTerm.toLowerCase())

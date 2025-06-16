@@ -33,13 +33,15 @@ const SignIn = ({ formData, onChange }) => {
             });
             const data = await response.json();
             if (response.ok) {
+                localStorage.setItem("token", data.token);
+                const token = localStorage.getItem("token");
+                console.log("Token from local storage:", token);
                 toast.success("Login successful!", {
                     onClose: () => {
-                        setSocket(new WebSocket(`ws://localhost:8001/ws`));
+                        setSocket(new WebSocket(`ws://localhost:8001/ws?token=${token}`));
                         navigate("/chat");
                     }
                 });
-                localStorage.setItem("token", data.token);
             } else {
                 toast.error(data.message || "Login failed!");
             }
