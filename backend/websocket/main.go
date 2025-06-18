@@ -39,6 +39,11 @@ func main() {
 }
 
 func wsHandler(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		log.Println("User ID not found in context")
+		return
+	}
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
@@ -46,14 +51,15 @@ func wsHandler(c *gin.Context) {
 		return
 	}
 	defer conn.Close()
-	clients["user_id"] = conn
-	log.Println("New User connected")
+	userIDStr := userID.(string)
+	clients[userIDStr] = conn
+	log.Printf("New User connected with ID: %s", userIDStr)
 
 	for {
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("Read error:", err)
-			delete(clients, "user_id")
+			delete(clients, userIDStr)
 			break
 		}
 		log.Printf("Received message: %s", msg)
@@ -84,12 +90,12 @@ func backendWsHandler(c *gin.Context) {
 func handleMessages() {
 	for {
 		msg := <-broadcast
-		for _, client := range clients {
+		for userID, client := range clients {
 			err := client.WriteMessage(websocket.TextMessage, msg)
 			if err != nil {
 				log.Println("Write error:", err)
 				client.Close()
-				delete(clients, "user_id")
+				delete(clients, userID)
 			}
 		}
 	}
