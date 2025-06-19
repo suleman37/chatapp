@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import User_img from "../assets/empty-user.jpg"
 
 const MessageSidebar = ({ onChatSelect }) => {
@@ -6,6 +7,7 @@ const MessageSidebar = ({ onChatSelect }) => {
   const [chats, setChats] = useState([]);
   const [userId, setUserId] = useState(null);
   const [token, setToken] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -67,11 +69,21 @@ const MessageSidebar = ({ onChatSelect }) => {
   );
 
   const handleChatClick = (chat) => {
-    onChatSelect(chat);
+    console.log('Chat clicked:', chat);
+    console.log('Window width:', window.innerWidth);
+    if (window.innerWidth < 640) {
+      console.log('Navigating to mobile chat for user:', chat.id);
+      navigate(`/chat-mobile/${chat.id}`, { 
+        state: { user: chat } 
+      });
+    } else {
+      console.log('Using onChatSelect for desktop');
+      onChatSelect(chat);
+    }
   };
 
   return (
-    <div className="w-full max-w-xs h-screen border-r border-gray-600 bg-gray-800 text-white">
+    <div className="w-full sm:max-w-xs h-screen border-r border-gray-600 bg-gray-800 text-white">
       <div className="p-5 border-b border-gray-600 flex justify-between items-center">
         <h2 className="text-lg font-semibold text-white">Messages</h2>
         <button className="text-blue-500 text-xl">+</button>
