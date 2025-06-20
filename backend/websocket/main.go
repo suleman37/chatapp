@@ -50,20 +50,37 @@ func wsHandler(c *gin.Context) {
 		log.Println("Upgrade error:", err)
 		return
 	}
-	defer conn.Close()
-	userIDStr := userID.(string)
-	clients[userIDStr] = conn
-	log.Printf("New User connected with ID: %s", userIDStr)
+
+	userId, exists := c.Get("user_id")
+	if !exists {
+		log.Println("Error: user id not found")
+		conn.Close()
+		return
+	}
+
+	userIdString, ok := userId.(string)
+	if !ok {
+		log.Println("Error: user id is of incorrect type")
+		conn.Close()
+		return
+	}
+
+	clients[userIdString] = conn
+	log.Println("New User connected")
+
+	defer func() {
+		conn.Close()
+		delete(clients, userIdString)
+		log.Println("User disconnected")
+	}()
 
 	for {
-		_, msg, err := conn.ReadMessage()
+		_, _, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("Read error:", err)
 			delete(clients, userIDStr)
 			break
 		}
-		log.Printf("Received message: %s", msg)
-		broadcast <- msg
 	}
 }
 
@@ -90,12 +107,12 @@ func backendWsHandler(c *gin.Context) {
 func handleMessages() {
 	for {
 		msg := <-broadcast
-		for userID, client := range clients {
+		for userId, client := range clients {
 			err := client.WriteMessage(websocket.TextMessage, msg)
 			if err != nil {
 				log.Println("Write error:", err)
 				client.Close()
-				delete(clients, userID)
+				delete(clients, userId)
 			}
 		}
 	}
