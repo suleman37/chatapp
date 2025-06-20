@@ -12,7 +12,6 @@ services:
       - mongo
     networks:
       - chatnet
-
   mongo:
     image: mongo:latest
     container_name: mongo
@@ -24,8 +23,37 @@ services:
     networks:
       - chatnet
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: chatapp-frontend
+    ports:
+      - "5173:5173"
+    env_file:
+      - .env
+    networks:
+      - chatnet
+    depends_on:
+      - mongo
+
+  websocket:
+    build:
+      context: .
+      dockerfile: Dockerfile.websocket
+    container_name: chatapp-websocket
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    networks:
+      - chatnet
+    depends_on:
+      - mongo
+
 networks:
   chatnet:
+
 
 volumes:
   mongo-data:

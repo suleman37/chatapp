@@ -1,0 +1,31 @@
+# Use official Golang image as build environment
+FROM golang:1.24.2 AS builder
+
+WORKDIR /app
+
+COPY . .
+
+RUN pwd
+RUN ls -al
+
+RUN go mod download
+
+WORKDIR /app/websocket
+
+# Build the websocket server
+RUN go build -o websocket-server .
+
+# Final image
+FROM debian:bookworm-slim
+
+WORKDIR /app
+
+# Copy the built binary from the builder
+COPY --from=builder /app/websocket/websocket-server .
+
+# Copy .env if needed (optional, uncomment if you want to bake it in)
+# COPY ../.env .env
+
+EXPOSE 8001
+
+CMD ["./websocket-server"]
