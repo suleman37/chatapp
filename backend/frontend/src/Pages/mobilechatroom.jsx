@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-const ChatUI = ({ user }) => {
+const ChatUIMobile = () => {
+  const location = useLocation();
+  const user = location.state?.user;
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -31,7 +33,7 @@ const ChatUI = ({ user }) => {
         return;
       }
 
-      const ws = new WebSocket(`${import.meta.env.VITE_WEB_SOCKET}/ws?token=${token}`);
+      const ws = new WebSocket(`ws://localhost:8001/ws?token=${token}`);
 
       ws.onopen = () => console.log('WebSocket connection established');
       ws.onmessage = (event) => {
@@ -48,7 +50,6 @@ const ChatUI = ({ user }) => {
 
       return () => ws.close();
     };
-
     const fetchMessages = async () => {
       if (!user?.id) {
         console.error('User or user.id is null');
@@ -86,7 +87,6 @@ const ChatUI = ({ user }) => {
       fetchMessages();
     }
   }, [token, userId, user]);
-
   const handleSendMessage = async () => {
     if (newMessage.trim() && user?.id) {
       const messageData = {
@@ -117,20 +117,18 @@ const ChatUI = ({ user }) => {
       }
     }
   };
-
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       handleSendMessage();
     }
   };
-
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/');
   };
 
   return (
-    <div className="hidden sm:flex w-full bg-gray-800 rounded-2xl shadow-lg flex-col h-screen text-white">
+    <div className="w-full bg-gray-800 rounded-2xl shadow-lg flex flex-col h-screen text-white">
       <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-700 bg-gray-900">
         <img
           src={user?.img || "https://cdn.vectorstock.com/i/1000v/66/92/error-404-page-not-found-website-web-failure-vector-24176692.avif"}
@@ -178,4 +176,4 @@ const ChatUI = ({ user }) => {
   );
 };
 
-export default ChatUI;
+export default ChatUIMobile;
