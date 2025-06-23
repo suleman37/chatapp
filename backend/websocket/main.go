@@ -39,11 +39,11 @@ func main() {
 }
 
 func wsHandler(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		log.Println("User ID not found in context")
-		return
-	}
+	// userID, exists := c.Get("user_id")
+	// if !exists {
+	// 	log.Println("User ID not found in context")
+	// 	return
+	// }
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
@@ -78,7 +78,7 @@ func wsHandler(c *gin.Context) {
 		_, _, err := conn.ReadMessage()
 		if err != nil {
 			log.Println("Read error:", err)
-			delete(clients, userIDStr)
+			delete(clients, userIdString)
 			break
 		}
 	}
