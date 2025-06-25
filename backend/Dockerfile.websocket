@@ -22,6 +22,7 @@ WORKDIR /app
 
 # Copy the built binary from the builder
 COPY --from=builder /app/websocket/websocket-server .
+COPY --from=builder /app/.env .
 
 # Copy .env if needed (optional, uncomment if you want to bake it in)
 # COPY ../.env .env

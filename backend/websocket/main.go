@@ -4,7 +4,6 @@ import (
 	"Go_Chatapp/middleware"
 	"log"
 	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
@@ -21,11 +20,11 @@ var broadcast = make(chan []byte)
 
 func main() {
 
-	err := godotenv.Load("../.env")
+	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-
+ 
 	go handleMessages()
 	router := gin.Default()
 	router.GET("/ws", middleware.SocketMiddleware(), wsHandler)
