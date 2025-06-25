@@ -22,7 +22,7 @@ func main() {
 
 	dbconnect.DBConnection()
 
-	wsURL := "ws://localhost:8001/ws-backend"
+	wsURL := "ws://websocket:8001/ws-backend"
 	models.WebsocketConn, _, err = websocket.DefaultDialer.Dial(wsURL, nil)
 	if err != nil {
 		log.Fatalf("Failed to connect to WebSocket backend: %v", err)
